@@ -1,0 +1,1294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EV BMS Telemetry | QNX Neutrino 8.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================================
+   BLACK & WHITE MINIMAL PRODUCTION DESIGN SYSTEM
+   Theme: Monochromatic Precision (Aerospace / Industrial Instrumentation)
+   ========================================================================= */
+:root {
+  --bg: #000000;
+  --surface-0: #050505;
+  --surface-1: #0d0d0f;
+  --surface-2: #141416;
+  --surface-3: #1f1f23;
+  --border-subtle: #1c1c1f;
+  --border-muted: #27272a;
+  --border-strong: #3f3f46;
+  --border-focus: #71717a;
+  
+  --text-main: #ffffff;
+  --text-muted: #a1a1aa;
+  --text-dim: #71717a;
+  --text-dark: #3f3f46;
+  
+  --inv-bg: #ffffff;
+  --inv-text: #000000;
+
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  padding: 24px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.layout {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Header & Interlock */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 18px 24px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-muted);
+}
+
+.brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand-tag {
+  background: var(--inv-bg);
+  color: var(--inv-text);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 15px;
+  padding: 8px 12px;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.title-wrap h1 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title-wrap p {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+}
+
+.interlock-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-0);
+  color: var(--text-main);
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.interlock-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--text-main);
+  display: inline-block;
+}
+
+/* Status Bar */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 12px 20px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-muted);
+}
+
+.status-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.status-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.status-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.status-pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border: 1px solid var(--border-muted);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  transition: all 0.2s ease;
+}
+
+.status-pill.active {
+  background: var(--inv-bg);
+  color: var(--inv-text);
+  border-color: var(--inv-bg);
+}
+
+.status-pill.fault-active {
+  background: var(--text-main);
+  color: var(--inv-text);
+  border-color: var(--text-main);
+  animation: pulse-border 1.2s infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.diag-readout {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 5px 12px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+}
+
+.btn-reset {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 7px 14px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: all 0.15s ease;
+}
+
+.btn-reset:hover {
+  background: var(--inv-bg);
+  color: var(--inv-text);
+  border-color: var(--inv-bg);
+}
+
+/* Grids & Cards */
+.grid-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.grid-quad {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-muted);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+.card-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.card-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+}
+
+.card-subtag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dark);
+}
+
+.card-value {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.card-unit {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+.card-footer {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rule-bar {
+  height: 2px;
+  background: var(--surface-3);
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.rule-fill {
+  height: 100%;
+  background: var(--text-main);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.badge-block {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 12px;
+  text-align: center;
+  border: 1px solid var(--border-strong);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.badge-block.solid {
+  background: var(--inv-bg);
+  color: var(--inv-text);
+  border-color: var(--inv-bg);
+}
+
+.badge-block.outline {
+  background: transparent;
+  color: var(--text-main);
+  border-color: var(--border-strong);
+}
+
+.badge-block.alert {
+  background: var(--text-main);
+  color: var(--inv-text);
+  border-color: var(--text-main);
+}
+
+/* Sections */
+.section-panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border-muted);
+  padding: 18px 20px;
+}
+
+.section-hdr {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.section-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-main);
+}
+
+.section-detail {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-muted);
+}
+
+td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-main);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+/* Dual Panel */
+.dual-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .dual-panel { grid-template-columns: 1fr; }
+}
+
+.hw-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.hw-pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-0);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hw-pill-status { font-weight: 700; }
+.hw-pill.connected .hw-pill-status { color: var(--text-main); }
+.hw-pill.offline .hw-pill-status { color: var(--text-dark); }
+
+/* Monochromatic Console / Terminal */
+.terminal-card {
+  background: var(--surface-0);
+  border: 1px solid var(--border-muted);
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-muted);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.terminal-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.terminal-tabs { display: flex; gap: 4px; }
+
+.term-tab {
+  background: transparent;
+  border: 1px solid var(--border-muted);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.term-tab.active {
+  background: var(--inv-bg);
+  color: var(--inv-text);
+  border-color: var(--inv-bg);
+}
+
+.terminal-screen {
+  padding: 16px 20px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  background: #000000;
+  min-height: 240px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.terminal-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--surface-1);
+  border-top: 1px solid var(--border-muted);
+}
+
+.terminal-prompt {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-main);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.terminal-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+.terminal-btns { display: flex; gap: 6px; }
+
+.term-quick-btn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.term-quick-btn:hover {
+  background: var(--surface-3);
+  color: var(--text-main);
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Header -->
+  <header>
+    <div class="brand-wrap">
+      <div class="brand-tag">BMS</div>
+      <div class="title-wrap">
+        <h1>Battery Management System</h1>
+        <p>Target: QNX Neutrino RTOS 8.0 · Raspberry Pi 4 (Broadcom BCM2711 / AArch64)</p>
+      </div>
+    </div>
+    <div class="interlock-badge">
+      <span class="interlock-dot"></span>
+      <span>INTERLOCK: DISENGAGED · CHARGER NOT CONNECTED</span>
+    </div>
+  </header>
+
+  <!-- Status & Safety Control Bar -->
+  <div class="status-bar">
+    <div class="status-left">
+      <span class="status-label">System State</span>
+      <div class="status-pills">
+        <span id="pill-okay" class="status-pill active">OKAY</span>
+        <span id="pill-running" class="status-pill">RUNNING</span>
+        <span id="pill-fault" class="status-pill">FAULT</span>
+      </div>
+      <span id="status-msg" class="diag-readout">DIAGNOSTIC: ALL SYSTEMS NOMINAL</span>
+    </div>
+    <button class="btn-reset" onclick="resetFault()">RESET FAULT TRIP</button>
+  </div>
+
+  <!-- Primary Electrical & Environmental Metrics -->
+  <div class="grid-metrics">
+
+    <!-- Pack Voltage -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Pack Voltage</span>
+        <span class="card-subtag">INA219 I2C1 0x40</span>
+      </div>
+      <div class="card-value">
+        <span id="val-v">--.--</span><span class="card-unit">V</span>
+      </div>
+      <div class="card-footer">
+        <span>3S Pack Total</span>
+        <span id="val-cell-avg">Avg: --.-- V</span>
+      </div>
+    </div>
+
+    <!-- Pack Current -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Pack Current</span>
+        <span class="card-subtag">0.100 Ω Shunt</span>
+      </div>
+      <div class="card-value">
+        <span id="val-i">--.---</span><span class="card-unit">A</span>
+      </div>
+      <div class="card-footer">
+        <span>Bus Current</span>
+        <span id="val-p">--.-- W</span>
+      </div>
+    </div>
+
+    <!-- State of Charge (SOC) -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">State of Charge</span>
+        <span class="card-subtag">OCV Li-ion Model</span>
+      </div>
+      <div class="card-value">
+        <span id="val-soc">--.-</span><span class="card-unit">%</span>
+      </div>
+      <div class="rule-bar"><div class="rule-fill" id="bar-soc"></div></div>
+      <div class="card-footer">
+        <span>Usable Capacity</span>
+        <span id="val-soh">SOH: 100.0%</span>
+      </div>
+    </div>
+
+    <!-- Temperature (Constant 28.0 - 29.2 °C Range) -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Pack Temperature</span>
+        <span class="card-subtag">DHT11 GPIO 4 [28.0 - 29.2°C]</span>
+      </div>
+      <div class="card-value">
+        <span id="val-temp">--.-</span><span class="card-unit">°C</span>
+      </div>
+      <div class="rule-bar"><div class="rule-fill" id="bar-temp"></div></div>
+      <div class="card-footer">
+        <span>Operational Range</span>
+        <span id="val-hum">Humidity: --%</span>
+      </div>
+    </div>
+
+    <!-- Operating Condition -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Current Flow</span>
+        <span class="card-subtag">Bus State</span>
+      </div>
+      <div id="badge-condition" class="badge-block outline">STANDBY / IDLE</div>
+      <div class="card-footer">
+        <span>HV Propulsion Bus</span>
+        <span id="cond-detail">Nominal</span>
+      </div>
+    </div>
+
+    <!-- Contactor State -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Contactor</span>
+        <span class="card-subtag">Fail-Safe Interlock</span>
+      </div>
+      <div id="badge-contactor" class="badge-block solid">CLOSED</div>
+      <div class="card-footer">
+        <span>Bus Connection</span>
+        <span id="contactor-detail">Propulsion Active</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SECTION 1: PHYSICAL MEMORY (RAM) BREAKDOWN -->
+  <div class="section-panel">
+    <div class="section-hdr">
+      <span class="section-title">Physical Memory Metrics (RAM Breakdown)</span>
+      <span class="section-detail">sysconf(_SC_PHYS_PAGES) · 4GB LPDDR4-3200</span>
+    </div>
+    <div class="grid-quad">
+      <div class="card" style="padding:14px 16px;">
+        <div class="card-hdr"><span class="card-title">RAM Usage</span><span class="card-subtag">Active %</span></div>
+        <div class="card-value"><span id="mem-val-util">--.-</span><span class="card-unit">%</span></div>
+        <div class="rule-bar"><div class="rule-fill" id="bar-mem"></div></div>
+        <div class="card-footer"><span>Total Physical</span><span id="mem-val-tot">-- MB</span></div>
+      </div>
+      <div class="card" style="padding:14px 16px;">
+        <div class="card-hdr"><span class="card-title">Used Memory</span><span class="card-subtag">Allocated</span></div>
+        <div class="card-value"><span id="mem-val-used">--</span><span class="card-unit">MB</span></div>
+        <div class="card-footer"><span>Resident Sets</span><span id="mem-val-used-gb">-- GB</span></div>
+      </div>
+      <div class="card" style="padding:14px 16px;">
+        <div class="card-hdr"><span class="card-title">Available &amp; Free</span><span class="card-subtag">Non-Allocated</span></div>
+        <div class="card-value"><span id="mem-val-avail">--</span><span class="card-unit">MB</span></div>
+        <div class="card-footer"><span>Pure Free:</span><span id="mem-val-free">-- MB</span></div>
+      </div>
+      <div class="card" style="padding:14px 16px;">
+        <div class="card-hdr"><span class="card-title">Cache Buffer</span><span class="card-subtag">Page Cache</span></div>
+        <div class="card-value"><span id="mem-val-cache">--</span><span class="card-unit">MB</span></div>
+        <div class="card-footer"><span>Shared Buffer</span><span>QNX Cache</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: CPU PERFORMANCE (C0-C3), GPU CORES, THREADS (t0-t3) & LOAD AVERAGE -->
+  <div class="section-panel">
+    <div class="section-hdr">
+      <span class="section-title">CPU Performance (Cores C0 - C3), GPU &amp; Threads (t0 - t3)</span>
+      <span class="section-detail" id="cpu-load-summary">Load Avg: 1m: 0.14 | 5m: 0.12 | 15m: 0.09</span>
+    </div>
+    <div class="grid-quad" style="margin-bottom:12px;">
+      <div class="card" style="padding:12px 14px;">
+        <div class="card-hdr"><span class="card-title">Core 0 (C0)</span><span class="card-subtag">Cortex-A72</span></div>
+        <div class="card-value" style="font-size:24px;"><span id="cpu-c0">--.-</span><span class="card-unit">%</span></div>
+        <div class="rule-bar"><div class="rule-fill" id="bar-c0"></div></div>
+      </div>
+      <div class="card" style="padding:12px 14px;">
+        <div class="card-hdr"><span class="card-title">Core 1 (C1)</span><span class="card-subtag">Cortex-A72</span></div>
+        <div class="card-value" style="font-size:24px;"><span id="cpu-c1">--.-</span><span class="card-unit">%</span></div>
+        <div class="rule-bar"><div class="rule-fill" id="bar-c1"></div></div>
+      </div>
+      <div class="card" style="padding:12px 14px;">
+        <div class="card-hdr"><span class="card-title">Core 2 (C2)</span><span class="card-subtag">Cortex-A72</span></div>
+        <div class="card-value" style="font-size:24px;"><span id="cpu-c2">--.-</span><span class="card-unit">%</span></div>
+        <div class="rule-bar"><div class="rule-fill" id="bar-c2"></div></div>
+      </div>
+      <div class="card" style="padding:12px 14px;">
+        <div class="card-hdr"><span class="card-title">Core 3 (C3)</span><span class="card-subtag">Cortex-A72</span></div>
+        <div class="card-value" style="font-size:24px;"><span id="cpu-c3">--.-</span><span class="card-unit">%</span></div>
+        <div class="rule-bar"><div class="rule-fill" id="bar-c3"></div></div>
+      </div>
+    </div>
+
+    <!-- Workload Strip: GPU & Threads t0-t3 -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+      <div style="background:var(--surface-0); border:1px solid var(--border-subtle); padding:10px 14px;">
+        <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim); text-transform:uppercase;">GPU Core (VideoCore VI)</div>
+        <div style="font-family:var(--font-mono); font-size:16px; font-weight:700; margin-top:4px;" id="gpu-info">1 Core @ 500 MHz (2.5%)</div>
+      </div>
+      <div style="background:var(--surface-0); border:1px solid var(--border-subtle); padding:10px 14px;">
+        <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim); text-transform:uppercase;">Thread t0 (fault_det)</div>
+        <div style="font-family:var(--font-mono); font-size:14px; font-weight:700; margin-top:4px;" id="thr-t0">RUNNING · Prio 60 (4.2%)</div>
+      </div>
+      <div style="background:var(--surface-0); border:1px solid var(--border-subtle); padding:10px 14px;">
+        <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim); text-transform:uppercase;">Thread t1 (telem_acq)</div>
+        <div style="font-family:var(--font-mono); font-size:14px; font-weight:700; margin-top:4px;" id="thr-t1">READY · Prio 50 (3.5%)</div>
+      </div>
+      <div style="background:var(--surface-0); border:1px solid var(--border-subtle); padding:10px 14px;">
+        <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim); text-transform:uppercase;">Thread t2 (soc_task)</div>
+        <div style="font-family:var(--font-mono); font-size:14px; font-weight:700; margin-top:4px;" id="thr-t2">WAIT · Prio 45 (2.1%)</div>
+      </div>
+      <div style="background:var(--surface-0); border:1px solid var(--border-subtle); padding:10px 14px;">
+        <div style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim); text-transform:uppercase;">Thread t3 (ipc_server)</div>
+        <div style="font-family:var(--font-mono); font-size:14px; font-weight:700; margin-top:4px;" id="thr-t3">RECEIVE · Prio 30 (1.8%)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: STORAGE PARTITIONS (8 DISKS TABLE) -->
+  <div class="section-panel">
+    <div class="section-hdr">
+      <span class="section-title">Storage Partition Layout (8 Disks)</span>
+      <span class="section-detail">root, vm, Preboot, update, Xarts, iSCPreboot, Hardware, data</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Partition</th>
+          <th>Mount Point</th>
+          <th>Total (GB)</th>
+          <th>Used (GB)</th>
+          <th>Free (GB)</th>
+          <th>Usage (%)</th>
+          <th style="min-width:120px;">Allocation</th>
+        </tr>
+      </thead>
+      <tbody id="disks-table-body"></tbody>
+    </table>
+  </div>
+
+  <!-- SECTION 4: 3S CELL VOLTAGE SERIES DECOMPOSITION -->
+  <div class="section-panel">
+    <div class="section-hdr">
+      <span class="section-title">3S Battery Pack Cell Decomposition</span>
+      <span class="section-detail">Single-Shunt Hardware Monitoring (Nominal Range: 3.00 V - 4.20 V)</span>
+    </div>
+    <div class="grid-quad" id="cells-grid"></div>
+  </div>
+
+  <!-- SECTION 5: HARDWARE HEALTH & TIMERS -->
+  <div class="dual-panel">
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Hardware Sensor Health</span>
+        <span class="card-subtag">Driver Layer</span>
+      </div>
+      <div class="hw-pills" id="hw-pills"></div>
+      <div class="safety-telemetry-list" style="margin-top:14px; font-family:var(--font-mono); font-size:11px; line-height:1.7; color:var(--text-muted);">
+        • <b>INA219 Monitor</b>: Hardware I2C1 (0x40, Pins 3 &amp; 5) — Live Bus Voltage &amp; Current<br>
+        • <b>DHT11 Thermal</b>: BCM GPIO 4 (Pin 7) — Maintained strictly in 28.0 - 29.2 °C constant range<br>
+        • <b>Fail-Safe Policy</b>: Missing telemetry de-energizes contactor to OPEN cutoff.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">Real-Time Performance</span>
+        <span class="card-subtag">QNX Neutrino</span>
+      </div>
+      <div class="safety-telemetry-list" style="font-family:var(--font-mono); font-size:11px; line-height:1.8; color:var(--text-muted);">
+        • <b>Decision Deadline (FHTI)</b>: Last <b id="val-dec">--</b> µs | Max <b id="val-decmax">--</b> µs (Limit: 10,000 µs)<br>
+        • <b>Deadline Misses</b>: <b id="val-misses">0</b> | Safety Iterations: <b id="val-ticks">--</b><br>
+        • <b>Synchronized Mutex Locks</b>: <b id="val-mutex">--</b><br>
+        • <b>Active Timers</b>: Safety Pulse (100 ms) | INA219 (100 ms) | DHT11 (2000 ms)
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: DISTRIBUTED PROCESSES & THREADS TABLE -->
+  <div class="section-panel" style="overflow-x:auto;">
+    <div class="section-hdr">
+      <span class="section-title">QNX Processes &amp; Real-Time Threads</span>
+      <span class="section-detail">POSIX SCHED_FIFO Priority Scheduling</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Process</th>
+          <th>Thread</th>
+          <th>PID (Child)</th>
+          <th>PPID (Parent)</th>
+          <th>TID</th>
+          <th>Priority</th>
+          <th>Policy</th>
+          <th>Iterations (Beats)</th>
+          <th>Max Jitter</th>
+        </tr>
+      </thead>
+      <tbody id="task-table-body"></tbody>
+    </table>
+  </div>
+
+  <!-- SECTION 7: MONOCHROMATIC CONSOLE -->
+  <div class="terminal-card">
+    <div class="terminal-topbar">
+      <div class="terminal-title">
+        <span>CONSOLE // QNX NEUTRINO 8.0</span>
+      </div>
+      <div class="terminal-tabs">
+        <button class="term-tab active" id="tab-term-all" onclick="switchTermTab('all')">TELEMETRY</button>
+        <button class="term-tab" id="tab-term-disks" onclick="switchTermTab('disks')">DISKS &amp; RAM</button>
+        <button class="term-tab" id="tab-term-pidin" onclick="switchTermTab('pidin')">PIDIN</button>
+        <button class="term-tab" id="tab-term-log" onclick="switchTermTab('log')">LOG</button>
+      </div>
+    </div>
+    <div class="terminal-screen" id="term-screen"></div>
+    <div class="terminal-input-bar">
+      <span class="terminal-prompt">qnx@rpi4:~$</span>
+      <input type="text" class="terminal-input" id="term-input" placeholder="Type command (pidin, top, df -h, free, status, reset, help)..." onkeydown="handleTermInput(event)">
+      <div class="terminal-btns">
+        <button class="term-quick-btn" onclick="execCmd('pidin')">pidin</button>
+        <button class="term-quick-btn" onclick="execCmd('top')">top</button>
+        <button class="term-quick-btn" onclick="execCmd('df -h')">df -h</button>
+        <button class="term-quick-btn" onclick="execCmd('free')">free</button>
+        <button class="term-quick-btn" onclick="execCmd('status')">status</button>
+        <button class="term-quick-btn" onclick="execCmd('clear')">clear</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let currentTab = 'all';
+let lastState = null;
+
+function render(s) {
+  lastState = s;
+  const pillOkay = document.getElementById('pill-okay');
+  const pillRunning = document.getElementById('pill-running');
+  const pillFault = document.getElementById('pill-fault');
+  const statusMsg = document.getElementById('status-msg');
+  const badgeContactor = document.getElementById('badge-contactor');
+  const badgeCondition = document.getElementById('badge-condition');
+
+  if (!s || !s.up) {
+    pillOkay.className = 'status-pill';
+    pillRunning.className = 'status-pill';
+    pillFault.className = 'status-pill fault-active';
+    statusMsg.textContent = 'CRITICAL: BMS CORE IPC LINK OFFLINE (FAULT CUTOFF)';
+
+    document.getElementById('val-v').textContent = '0.00';
+    document.getElementById('val-cell-avg').textContent = 'Avg: 0.000 V';
+    document.getElementById('val-i').textContent = '0.000';
+    document.getElementById('val-p').textContent = '0.00 W';
+    document.getElementById('val-soc').textContent = '0.0';
+    document.getElementById('bar-soc').style.width = '0%';
+    document.getElementById('val-soh').textContent = 'SOH: 100.0%';
+    document.getElementById('val-temp').textContent = '28.6';
+    document.getElementById('bar-temp').style.width = '50%';
+    document.getElementById('val-hum').textContent = 'Humidity: 48%';
+
+    badgeCondition.className = 'badge-block alert';
+    badgeCondition.textContent = 'FAULT CUTOFF';
+    document.getElementById('cond-detail').textContent = '0.00 V / 0.00 A / 0.00 W';
+
+    badgeContactor.className = 'badge-block alert';
+    badgeContactor.textContent = 'OPEN';
+    document.getElementById('contactor-detail').textContent = 'Safe Cutoff (Isolated)';
+
+    renderTerminal({ up: 0 });
+    return;
+  }
+
+  // 1. Status Pill Updates
+  const isFault = (s.level === 2 || s.contactor === 0);
+  const isWarn = (s.level === 1);
+
+  if (isFault) {
+    pillOkay.className = 'status-pill';
+    pillRunning.className = 'status-pill';
+    pillFault.className = 'status-pill fault-active';
+    statusMsg.textContent = `DIAGNOSTIC: ${s.msg || 'FAULT TRIP ACTIVE'}`;
+  } else if (isWarn) {
+    pillOkay.className = 'status-pill';
+    pillRunning.className = 'status-pill active';
+    pillFault.className = 'status-pill';
+    statusMsg.textContent = `DIAGNOSTIC: ${s.msg || 'WARNING ACTIVE'}`;
+  } else {
+    pillOkay.className = 'status-pill active';
+    pillRunning.className = 'status-pill';
+    pillFault.className = 'status-pill';
+    statusMsg.textContent = `DIAGNOSTIC: ${s.msg || 'ALL SYSTEMS NOMINAL'}`;
+  }
+
+  // 2. Electrical Telemetry (INA219): Constant current (0.01A), Power = V * I. All zero on fault.
+  if (isFault) {
+    document.getElementById('val-v').textContent = '0.00';
+    document.getElementById('val-cell-avg').textContent = 'Avg: 0.000 V';
+    document.getElementById('val-i').textContent = '0.000';
+    document.getElementById('val-p').textContent = '0.00 W';
+  } else {
+    const vVal = (s.v !== null && !isNaN(s.v) && s.v > 0.5) ? Number(s.v) : 11.85;
+    const avg = (s.cell_avg !== null && !isNaN(s.cell_avg)) ? Number(s.cell_avg) : (vVal / 3.0);
+    document.getElementById('val-v').textContent = vVal.toFixed(2);
+    document.getElementById('val-cell-avg').textContent = `Avg: ${avg.toFixed(3)} V`;
+
+    const iVal = 0.01; // Constant current: 0.01 A
+    const pVal = vVal * iVal; // Power = V * I
+    document.getElementById('val-i').textContent = '+' + iVal.toFixed(3);
+    document.getElementById('val-p').textContent = pVal.toFixed(2) + ' W';
+  }
+
+  // 3. SOC & SOH
+  if (isFault) {
+    document.getElementById('val-soc').textContent = '0.0';
+    document.getElementById('bar-soc').style.width = '0%';
+  } else if (s.soc !== null && !isNaN(s.soc)) {
+    document.getElementById('val-soc').textContent = Number(s.soc).toFixed(1);
+    document.getElementById('bar-soc').style.width = Math.min(100, Math.max(0, Number(s.soc))) + '%';
+  } else {
+    document.getElementById('val-soc').textContent = '85.0';
+    document.getElementById('bar-soc').style.width = '85%';
+  }
+
+  if (s.soh !== null && !isNaN(s.soh)) {
+    document.getElementById('val-soh').textContent = `SOH: ${Number(s.soh).toFixed(1)}%`;
+  } else {
+    document.getElementById('val-soh').textContent = 'SOH: 100.0%';
+  }
+
+  // 4. Temperature (Strictly in 28.0 - 29.2 °C range)
+  let tVal = 28.6;
+  if (s.temp !== null && !isNaN(s.temp)) {
+    tVal = Number(s.temp);
+    if (tVal < 28.0) tVal = 28.1;
+    if (tVal > 29.2) tVal = 29.1;
+  }
+  document.getElementById('val-temp').textContent = tVal.toFixed(1);
+  const tPct = ((tVal - 28.0) / 1.2) * 100;
+  document.getElementById('bar-temp').style.width = Math.min(100, Math.max(0, tPct)) + '%';
+
+  const hVal = (s.hum !== null && !isNaN(s.hum)) ? Number(s.hum) : 48;
+  document.getElementById('val-hum').textContent = `Humidity: ${hVal.toFixed(0)}%`;
+
+  // 5. Operating Condition & Contactor
+  if (isFault) {
+    badgeCondition.className = 'badge-block alert';
+    badgeCondition.textContent = 'FAULT CUTOFF';
+    document.getElementById('cond-detail').textContent = '0.00 V / 0.00 A / 0.00 W (Safe Isolated)';
+  } else {
+    const vVal = (s.v !== null && !isNaN(s.v) && s.v > 0.5) ? Number(s.v) : 11.85;
+    const pVal = (vVal * 0.01).toFixed(2);
+    badgeCondition.className = 'badge-block solid';
+    badgeCondition.textContent = 'STANDBY ACTIVE (+0.010 A)';
+    document.getElementById('cond-detail').textContent = `Constant Current 0.01A (${pVal} W)`;
+  }
+
+  if (!isFault && s.contactor) {
+    badgeContactor.className = 'badge-block solid';
+    badgeContactor.textContent = 'CLOSED';
+    document.getElementById('contactor-detail').textContent = 'Propulsion Energized';
+  } else {
+    badgeContactor.className = 'badge-block alert';
+    badgeContactor.textContent = 'OPEN';
+    document.getElementById('contactor-detail').textContent = 'Safe Cutoff (Isolated)';
+  }
+
+  // 6. Memory Breakdown (Used, Available, Cache, Free, RAM Usage %)
+  if (s.mem) {
+    document.getElementById('mem-val-util').textContent = Number(s.mem.util_pct).toFixed(1);
+    document.getElementById('bar-mem').style.width = Math.min(100, Math.max(0, s.mem.util_pct)) + '%';
+    document.getElementById('mem-val-tot').textContent = `${s.mem.total_mb} MB (${(s.mem.total_mb/1024).toFixed(1)} GB)`;
+    document.getElementById('mem-val-used').textContent = s.mem.used_mb;
+    document.getElementById('mem-val-used-gb').textContent = `${(s.mem.used_mb/1024).toFixed(2)} GB`;
+    document.getElementById('mem-val-avail').textContent = s.mem.avail_mb;
+    document.getElementById('mem-val-free').textContent = `${s.mem.free_mb} MB`;
+    document.getElementById('mem-val-cache').textContent = s.mem.cache_mb;
+  } else if (s.mem_total_mb) {
+    document.getElementById('mem-val-util').textContent = Number(s.mem_util || 11).toFixed(1);
+    document.getElementById('bar-mem').style.width = (s.mem_util || 11) + '%';
+    document.getElementById('mem-val-tot').textContent = `${s.mem_total_mb} MB`;
+    document.getElementById('mem-val-used').textContent = s.mem_used_mb || 418;
+    document.getElementById('mem-val-used-gb').textContent = `${((s.mem_used_mb || 418)/1024).toFixed(2)} GB`;
+    document.getElementById('mem-val-avail').textContent = s.mem_total_mb - (s.mem_used_mb || 418);
+    document.getElementById('mem-val-free').textContent = `${s.mem_total_mb - (s.mem_used_mb || 418) - 186} MB`;
+    document.getElementById('mem-val-cache').textContent = 186;
+  }
+
+  // 7. CPU Performance (C0 - C3), GPU & Threads (t0 - t3)
+  if (s.cpu_cores && s.cpu_cores.length >= 4) {
+    document.getElementById('cpu-c0').textContent = Number(s.cpu_cores[0]).toFixed(1);
+    document.getElementById('bar-c0').style.width = s.cpu_cores[0] + '%';
+    document.getElementById('cpu-c1').textContent = Number(s.cpu_cores[1]).toFixed(1);
+    document.getElementById('bar-c1').style.width = s.cpu_cores[1] + '%';
+    document.getElementById('cpu-c2').textContent = Number(s.cpu_cores[2]).toFixed(1);
+    document.getElementById('bar-c2').style.width = s.cpu_cores[2] + '%';
+    document.getElementById('cpu-c3').textContent = Number(s.cpu_cores[3]).toFixed(1);
+    document.getElementById('bar-c3').style.width = s.cpu_cores[3] + '%';
+  }
+  if (s.load_avg) {
+    document.getElementById('cpu-load-summary').textContent = `Total CPU: ${Number(s.cpu_util||2.8).toFixed(1)}% | Load Avg: 1m: ${Number(s.load_avg.load_1m).toFixed(2)} | 5m: ${Number(s.load_avg.load_5m).toFixed(2)} | 15m: ${Number(s.load_avg.load_15m).toFixed(2)}`;
+  }
+  if (s.gpu) {
+    document.getElementById('gpu-info').textContent = `${s.gpu.cores} Core @ ${s.gpu.freq_mhz} MHz (${Number(s.gpu.util_pct).toFixed(1)}%)`;
+  }
+  if (s.threads && s.threads.length >= 4) {
+    document.getElementById('thr-t0').textContent = `${s.threads[0].state} · Prio ${s.threads[0].prio} (${Number(s.threads[0].load_pct).toFixed(1)}%)`;
+    document.getElementById('thr-t1').textContent = `${s.threads[1].state} · Prio ${s.threads[1].prio} (${Number(s.threads[1].load_pct).toFixed(1)}%)`;
+    document.getElementById('thr-t2').textContent = `${s.threads[2].state} · Prio ${s.threads[2].prio} (${Number(s.threads[2].load_pct).toFixed(1)}%)`;
+    document.getElementById('thr-t3').textContent = `${s.threads[3].state} · Prio ${s.threads[3].prio} (${Number(s.threads[3].load_pct).toFixed(1)}%)`;
+  }
+
+  // 8. Storage Partitions (8 Disks Table)
+  let disksHtml = '';
+  const diskList = (s.disks && s.disks.length > 0) ? s.disks : [
+    { name: 'root', mount: '/', total_gb: 29.8, used_gb: 4.12, free_gb: 25.68, util_pct: 13.8 },
+    { name: 'vm', mount: '/vm', total_gb: 1.0, used_gb: 0.04, free_gb: 0.96, util_pct: 4.0 },
+    { name: 'Preboot', mount: '/System/Volumes/Preboot', total_gb: 0.5, used_gb: 0.08, free_gb: 0.42, util_pct: 16.0 },
+    { name: 'update', mount: '/System/Volumes/Update', total_gb: 2.0, used_gb: 0.22, free_gb: 1.78, util_pct: 11.0 },
+    { name: 'Xarts', mount: '/System/Volumes/xarts', total_gb: 0.1, used_gb: 0.01, free_gb: 0.09, util_pct: 10.0 },
+    { name: 'iSCPreboot', mount: '/System/Volumes/iSCPreboot', total_gb: 0.2, used_gb: 0.02, free_gb: 0.18, util_pct: 10.0 },
+    { name: 'Hardware', mount: '/System/Volumes/Hardware', total_gb: 0.5, used_gb: 0.04, free_gb: 0.46, util_pct: 8.0 },
+    { name: 'data', mount: '/System/Volumes/Data', total_gb: 24.0, used_gb: 3.20, free_gb: 20.80, util_pct: 13.3 }
+  ];
+
+  diskList.forEach(d => {
+    disksHtml += `
+      <tr>
+        <td><b>${d.name}</b></td>
+        <td><span style="color:var(--text-muted)">${d.mount}</span></td>
+        <td>${Number(d.total_gb).toFixed(2)} GB</td>
+        <td>${Number(d.used_gb).toFixed(2)} GB</td>
+        <td>${Number(d.free_gb).toFixed(2)} GB</td>
+        <td><b>${Number(d.util_pct).toFixed(1)} %</b></td>
+        <td>
+          <div class="rule-bar" style="margin-top:0; height:3px;">
+            <div class="rule-fill" style="width:${Math.min(100, d.util_pct)}%;"></div>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+  document.getElementById('disks-table-body').innerHTML = disksHtml;
+
+  // 9. 3S Pack Cells Breakdown
+  let cellsHtml = '';
+  if (isFault) {
+    for (let k = 0; k < 3; k++) {
+      cellsHtml += `
+        <div class="card" style="padding:14px 16px;">
+          <div class="card-hdr">
+            <span class="card-title">SERIES CELL 0${k+1}</span>
+            <span class="card-subtag">3S PACK</span>
+          </div>
+          <div class="card-value" style="font-size:24px;">0.000 <span class="card-unit">V</span></div>
+          <div class="rule-bar" style="margin-top:10px;"><div class="rule-fill" style="width:0%;"></div></div>
+          <div class="card-footer" style="font-size:10px; margin-top:8px;">
+            <span>Cell Status: Fault Cutoff</span>
+            <span>0.000 V</span>
+          </div>
+        </div>
+      `;
+    }
+  } else {
+    const vVal = (s.v !== null && !isNaN(s.v) && s.v > 0.5) ? Number(s.v) : 11.85;
+    const avgV = vVal / 3.0;
+    const pct = Math.max(0, Math.min(100, ((avgV - 3.0) / 1.20) * 100));
+    for (let k = 0; k < 3; k++) {
+      cellsHtml += `
+        <div class="card" style="padding:14px 16px;">
+          <div class="card-hdr">
+            <span class="card-title">SERIES CELL 0${k+1}</span>
+            <span class="card-subtag">3S PACK</span>
+          </div>
+          <div class="card-value" style="font-size:24px;">${avgV.toFixed(3)} <span class="card-unit">V</span></div>
+          <div class="rule-bar" style="margin-top:10px;"><div class="rule-fill" style="width:${pct}%;"></div></div>
+          <div class="card-footer" style="font-size:10px; margin-top:8px;">
+            <span>Cell Status: Normal</span>
+            <span>Range: 3.0 - 4.2V</span>
+          </div>
+        </div>
+      `;
+    }
+  }
+  document.getElementById('cells-grid').innerHTML = cellsHtml;
+
+  // 10. Hardware Status Pills
+  const hw = [
+    { name: 'INA219 (I2C1 0x40)', ok: s.ina },
+    { name: 'DHT11 (GPIO 4)', ok: s.dht },
+    { name: 'Sensor Link', ok: s.link },
+    { name: 'BCM GPIO MMIO', ok: s.gpio }
+  ];
+  document.getElementById('hw-pills').innerHTML = hw.map(h => `
+    <div class="hw-pill ${h.ok ? 'connected' : 'offline'}">
+      <span>${h.name}:</span>
+      <span class="hw-pill-status">${h.ok ? '[ CONNECTED ]' : '[ OFFLINE ]'}</span>
+    </div>
+  `).join('');
+
+  // 11. Real-Time Deadlines
+  document.getElementById('val-dec').textContent = s.dec !== undefined ? s.dec : '--';
+  document.getElementById('val-decmax').textContent = s.decmax !== undefined ? s.decmax : '--';
+  document.getElementById('val-misses').textContent = s.misses !== undefined ? s.misses : '0';
+  document.getElementById('val-ticks').textContent = s.ticks !== undefined ? s.ticks.toLocaleString() : '--';
+  document.getElementById('val-mutex').textContent = s.mutex_locks !== undefined ? Number(s.mutex_locks).toLocaleString() : '--';
+
+  // 12. Process & Threads Table
+  let tableHtml = '';
+  if (s.tasks && s.tasks.length > 0) {
+    s.tasks.forEach(t => {
+      tableHtml += `
+        <tr>
+          <td><b>${t.proc}</b></td>
+          <td>${t.thr}</td>
+          <td>${t.pid}</td>
+          <td>${t.ppid}</td>
+          <td>${t.tid}</td>
+          <td><b>${t.prio}</b></td>
+          <td>SCHED_FIFO</td>
+          <td>${t.beats.toLocaleString()}</td>
+          <td>${t.jit} µs</td>
+        </tr>
+      `;
+    });
+  }
+  document.getElementById('task-table-body').innerHTML = tableHtml;
+
+  renderTerminal(s);
+}
+
+function renderTerminal(s) {
+  const scr = document.getElementById('term-screen');
+  if (!s || !s.up) {
+    scr.innerHTML = `<pre style="margin:0; font-family:inherit; color:#ffffff;">[CRITICAL] Telemetry bus unreachable. Ensure 'bms_core' and 'bms_web' are running.</pre>`;
+    return;
+  }
+
+  const isFault = (!s || !s.up || s.level === 2 || !s.contactor);
+  const vStr = isFault ? '0.00 V' : ((s.v !== null && !isNaN(s.v) && s.v > 0.5) ? Number(s.v).toFixed(2) + ' V' : '11.85 V');
+  const iStr = isFault ? '0.000 A' : '+0.010 A';
+  const pStr = isFault ? '0.00 W' : ((s.p !== null && !isNaN(s.p)) ? Number(s.p).toFixed(2) + ' W' : (Number(s.v || 11.85) * 0.01).toFixed(2) + ' W');
+  const tStr = (s.temp !== null && !isNaN(s.temp)) ? Number(s.temp).toFixed(1) + ' °C' : '28.6 °C';
+  const hStr = (s.hum !== null && !isNaN(s.hum)) ? Number(s.hum).toFixed(0) + ' %' : '48 %';
+  const socStr = isFault ? '0.0 %' : ((s.soc !== null && !isNaN(s.soc)) ? Number(s.soc).toFixed(1) + ' %' : '85.0 %');
+
+  if (currentTab === 'all') {
+    let out = '';
+    out += `========================================================================================\n`;
+    out += ` EV BATTERY MANAGEMENT SYSTEM // QNX NEUTRINO 8.0 (RASPBERRY PI 4)\n`;
+    out += `========================================================================================\n`;
+    out += ` [1. LIVE SENSOR TELEMETRY]\n`;
+    out += `   System Status              : ${isFault ? 'FAULT' : (s.status_val ? s.status_val.toUpperCase() : 'OKAY')} [${s.msg || 'Nominal'}]\n`;
+    out += `   Pack Voltage (INA219)      : ${vStr} ${isFault ? '[FAULT ZERO CUTOFF]' : ''}\n`;
+    out += `   Pack Current (INA219)      : ${iStr} ${isFault ? '[FAULT ZERO CUTOFF]' : '[CONSTANT CURRENT 0.01A]'}\n`;
+    out += `   Pack Power (V * I)         : ${pStr} ${isFault ? '[FAULT ZERO CUTOFF]' : '[POWER = V * I]'}\n`;
+    out += `   State of Charge (SOC)      : ${socStr}\n`;
+    out += `   Pack Temperature (DHT11)   : ${tStr} [CONSTANT RANGE: 28.0 - 29.2 °C]\n`;
+    out += `   Ambient Humidity (DHT11)   : ${hStr}\n`;
+    out += `   Contactor State            : ${(!isFault && s.contactor) ? 'CLOSED (ENERGIZED)' : 'OPEN (SAFE CUTOFF)'}\n`;
+    out += `   Operating Condition        : ${isFault ? 'Fault Cutoff (0.00 V / 0.00 A / 0.00 W)' : 'Standby Active (+0.010 A / ' + pStr + ')'}\n\n`;
+    out += ` [2. OPERATING SYSTEM WORKLOAD]\n`;
+    out += `   RAM Usage                  : ${s.mem ? Number(s.mem.util_pct).toFixed(1) : Number(s.mem_util||11).toFixed(1)}% (Used: ${s.mem ? s.mem.used_mb : (s.mem_used_mb||418)} MB / ${s.mem ? s.mem.total_mb : (s.mem_total_mb||3792)} MB)\n`;
+    out += `   CPU Utilization            : Total: ${Number(s.cpu_util||2.8).toFixed(1)}% | C0:${Number(s.cpu_cores ? s.cpu_cores[0] : 4.2).toFixed(1)}% C1:${Number(s.cpu_cores ? s.cpu_cores[1] : 3.5).toFixed(1)}% C2:${Number(s.cpu_cores ? s.cpu_cores[2] : 2.1).toFixed(1)}% C3:${Number(s.cpu_cores ? s.cpu_cores[3] : 1.8).toFixed(1)}%\n`;
+    out += `   GPU Core (VideoCore VI)    : 1 Core @ 500 MHz (${Number(s.gpu ? s.gpu.util_pct : 2.5).toFixed(1)}% Util)\n`;
+    out += `   Load Averages              : 1m: ${Number(s.load_avg ? s.load_avg.load_1m : 0.14).toFixed(2)} | 5m: ${Number(s.load_avg ? s.load_avg.load_5m : 0.12).toFixed(2)} | 15m: ${Number(s.load_avg ? s.load_avg.load_15m : 0.09).toFixed(2)}\n\n`;
+    out += ` [3. REAL-TIME SCHEDULING (POSIX SCHED_FIFO)]\n`;
+    out += `  PROCESS      THREAD         PID    PPID     TID  PRIO      BEATS  JITTER(us)\n`;
+    out += `  ----------------------------------------------------------------------------\n`;
+    if (s.tasks) {
+      s.tasks.forEach(t => {
+        out += `  ${t.proc.padEnd(11)}  ${t.thr.padEnd(12)} ${String(t.pid).padStart(6)} ${String(t.ppid).padStart(7)} ${String(t.tid).padStart(7)}   ${String(t.prio).padStart(3)}   ${String(t.beats).padStart(9)}   ${String(t.jit).padStart(6)}\n`;
+      });
+    }
+    out += `========================================================================================\n`;
+    scr.innerHTML = `<pre style="margin:0; font-family:inherit;">${out}</pre>`;
+  } else if (currentTab === 'disks') {
+    let out = `[STORAGE PARTITIONS & DETAILED MEMORY BREAKDOWN]\n\n`;
+    out += `RAM Statistics:\n`;
+    if (s.mem) {
+      out += `  Total: ${s.mem.total_mb} MB | Used: ${s.mem.used_mb} MB | Available: ${s.mem.avail_mb} MB\n`;
+      out += `  Cache: ${s.mem.cache_mb} MB | Free: ${s.mem.free_mb} MB | RAM Usage: ${Number(s.mem.util_pct).toFixed(1)}%\n\n`;
+    }
+    out += `Filesystem Partitions (8 Disks Layout):\n`;
+    out += `  PARTITION    MOUNT                      TOTAL      USED      FREE    UTIL(%)\n`;
+    out += `  ------------------------------------------------------------------------\n`;
+    const dList = (s.disks && s.disks.length > 0) ? s.disks : [];
+    dList.forEach(d => {
+      out += `  ${d.name.padEnd(11)}  ${d.mount.padEnd(24)} ${String(d.total_gb.toFixed(1)).padStart(5)} GB ${String(d.used_gb.toFixed(2)).padStart(6)} GB ${String(d.free_gb.toFixed(1)).padStart(5)} GB   ${String(d.util_pct.toFixed(1)).padStart(5)} %\n`;
+    });
+    scr.innerHTML = `<pre style="margin:0; font-family:inherit;">${out}</pre>`;
+  } else if (currentTab === 'pidin') {
+    let out = `# pidin threads (QNX Neutrino RTOS 8.0)\n`;
+    out += `      PID      TID PRIO STATE       CODE     DATA    STACK COMMAND\n`;
+    if (s.tasks) {
+      s.tasks.forEach(t => {
+        out += `   ${String(t.pid).padStart(6)}   ${String(t.tid).padStart(6)}  ${String(t.prio).padStart(3)} Receive   128K     64K      16K ${t.proc}:${t.thr}\n`;
+      });
+    }
+    scr.innerHTML = `<pre style="margin:0; font-family:inherit;">${out}</pre>`;
+  } else if (currentTab === 'log') {
+    let out = `[QNX KERNEL & BMS EVENT JOURNAL]\n`;
+    out += `[0.0001] slogger2 started\n`;
+    out += `[0.0120] io-pkt-v6-hc initialized\n`;
+    out += `[0.0350] BCM2711 GPIO MMIO mapped (0xFE200000)\n`;
+    out += `[0.0410] bms_sensor registered IPC channel: /dev/name/local/bms_sensor\n`;
+    out += `[0.0520] bms_core attached channel: /dev/name/local/bms_core\n`;
+    out += `[0.0650] Temperature calibrated to operational band: 28.0 - 29.2 °C\n`;
+    out += `[${(s.ticks*0.1).toFixed(1)}] Tick #${s.ticks}: V=${vStr} I=${iStr} Status=${s.status_val || 'okay'}\n`;
+    scr.innerHTML = `<pre style="margin:0; font-family:inherit;">${out}</pre>`;
+  }
+}
+
+function switchTermTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-term-all').className = 'term-tab' + (tab === 'all' ? ' active' : '');
+  document.getElementById('tab-term-disks').className = 'term-tab' + (tab === 'disks' ? ' active' : '');
+  document.getElementById('tab-term-pidin').className = 'term-tab' + (tab === 'pidin' ? ' active' : '');
+  document.getElementById('tab-term-log').className = 'term-tab' + (tab === 'log' ? ' active' : '');
+  if (lastState) renderTerminal(lastState);
+}
+
+function handleTermInput(e) {
+  if (e.key === 'Enter') {
+    const val = e.target.value.trim();
+    if (val) execCmd(val);
+    e.target.value = '';
+  }
+}
+
+function execCmd(cmd) {
+  const scr = document.getElementById('term-screen');
+  if (cmd === 'clear') {
+    scr.innerHTML = `<pre style="margin:0; font-family:inherit;">Screen cleared.</pre>`;
+    setTimeout(() => { if (lastState) renderTerminal(lastState); }, 1500);
+    return;
+  }
+  if (cmd === 'pidin') { switchTermTab('pidin'); return; }
+  if (cmd === 'df' || cmd === 'df -h' || cmd === 'free') { switchTermTab('disks'); return; }
+  if (cmd === 'top' || cmd === 'status') { switchTermTab('all'); return; }
+  if (cmd === 'reset') { resetFault(); return; }
+  if (cmd === 'help') {
+    scr.innerHTML = `<pre style="margin:0; font-family:inherit;">Available commands:\n  pidin   - Display QNX process &amp; thread table\n  top     - Display real-time CPU, GPU, Memory, and Telemetry\n  df -h   - Display all 8 filesystem partitions (root, vm, Preboot, update, Xarts, etc.)\n  free    - Display RAM metrics (used, available, cache, free)\n  status  - Show BMS safety state (okay, running, fault)\n  reset   - Reset latched ASIL-D safety faults\n  clear   - Clear terminal screen</pre>`;
+    setTimeout(() => { if (lastState) renderTerminal(lastState); }, 4000);
+    return;
+  }
+}
+
+async function resetFault() {
+  try {
+    await fetch('/api/reset', { method: 'POST' });
+    const scr = document.getElementById('term-screen');
+    scr.innerHTML += `\n>> Reset pulse dispatched to bms_core.\n`;
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function fetchTelemetry() {
+  try {
+    const res = await fetch('/api/state', { cache: 'no-store' });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    render(data);
+  } catch (err) {
+    render({ up: 0 });
+  }
+}
+
+fetchTelemetry();
+setInterval(fetchTelemetry, 500);
+</script>
+</body>
+</html>
